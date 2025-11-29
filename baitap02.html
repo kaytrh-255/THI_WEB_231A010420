@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Todo App – LocalStorage</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .container {
+        width: 450px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        display: grid;
+        gap: 20px; /* GRID */
+    }
+
+    h2 { margin: 0; }
+
+    .input-area {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+    }
+
+    input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        padding: 10px 14px;
+        border: none;
+        background: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover { opacity: 0.8; }
+
+    .list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .task {
+        background: #fafafa;
+        border: 1px solid #ddd;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 10px;
+        border-radius: 4px;
+    }
+
+    .edit-btn { background: orange; }
+    .delete-btn { background: red; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Todo List – LocalStorage</h2>
+
+    <div class="input-area">
+        <input id="taskInput" placeholder="Nhập task...">
+        <button id="addBtn">Thêm</button>
+    </div>
+
+    <div class="list" id="taskList"></div>
+</div>
+
+<script>
+// ================== 1. KHAI BÁO STATE ==================
+// Mình dùng 1 mảng "tasks" để lưu trạng thái toàn bộ dữ liệu.
+// Lý do: mảng dễ quản lý, dễ tìm index, dễ cập nhật và render lại.
+let tasks = [];
+
+
+// ================== 2. LOAD DỮ LIỆU TỪ LOCALSTORAGE ==================
+function loadFromStorage() {
+    const data = localStorage.getItem("todo-data");
+
+    // parse JSON, nếu null thì gán []
+    tasks = data ? JSON.parse(data) : [];
+}
+loadFromStorage();
+
+
+// ================== 3. LƯU LẠI LOCALSTORAGE ==================
+function saveToStorage() {
+    localStorage.setItem("todo-data", JSON.stringify(tasks));
+}
+
+
+// ================== 4. HÀM RENDER DANH SÁCH ==================
+function render() {
+    const list = document.getElementById("taskList");
+    list.innerHTML = ""; // xoá toàn bộ DOM cũ → tránh trùng lặp
+
+    tasks.forEach((task, index) => {
+        const div = document.createElement("div");
+        div.className = "task";
+
+        const text = document.createElement("span");
+        text.textContent = task;
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.className = "edit-btn";
+
+        editBtn.onclick = () => {
+            const newText = prompt("Chỉnh sửa task:", task);
+
+            // Kiểm tra người dùng bấm Cancel hoặc nhập rỗng
+            if (newText === null || newText.trim() === "") return;
+
+            tasks[index] = newText.trim(); // cập nhật mảng
+            saveToStorage();
+            render(); // render lại giao diện
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Xóa";
+        deleteBtn.className = "delete-btn";
+
+        deleteBtn.onclick = () => {
+            tasks.splice(index, 1); // xoá phần tử khỏi state
+            saveToStorage();
+            render();
+        };
+
+        div.appendChild(text);
+        div.appendChild(editBtn);
+        div.appendChild(deleteBtn);
+
+        list.appendChild(div);
+    });
+}
+
+
+// ================== 5. SỰ KIỆN THÊM TASK ==================
+document.getElementById("addBtn").onclick = addTask;
+document.getElementById("taskInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") addTask();
+});
+
+function addTask() {
+    const input = document.getElementById("taskInput");
+    const text = input.value.trim();
+
+    if (text === "") return alert("Task không được để trống!");
+
+    tasks.push(text); // thêm vào state
+    saveToStorage();
+    render();
+
+    input.value = ""; // reset input
+}
+
+
+// ================== RENDER BAN ĐẦU ==================
+render();
+</script>
+</body>
+</html>
