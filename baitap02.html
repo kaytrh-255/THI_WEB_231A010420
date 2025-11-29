@@ -1,753 +1,340 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carousel Hình Ảnh Chuyên Nghiệp</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Game Đoán Số 1–100</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --card:#0f1724;
+    --accent:#60a5fa;
+    --muted:#94a3b8;
+    --success:#34d399;
+    --danger:#fb7185;
+  }
 
-    body {
-        font-family: 'Arial', sans-serif;
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-    }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:Inter, system-ui, Arial;
+    background: linear-gradient(180deg,#071226 0%, #07192b 100%);
+    color:#e6eef8;
+    padding:24px;
+  }
 
-    .carousel-container {
-        max-width: 900px;
-        width: 100%;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        overflow: hidden;
-        position: relative;
-    }
+  .app {
+    width:100%;
+    max-width:560px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-radius:14px;
+    padding:20px;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+    position:relative;
+    overflow:visible;
+  }
 
-    /* Header */
-    .carousel-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        text-align: center;
-    }
+  h1{ margin:0 0 8px; font-size:20px }
+  p.lead{ margin:0 0 18px; color:var(--muted) }
 
-    .carousel-header h1 {
-        font-size: 2em;
-        margin-bottom: 5px;
-    }
+  .controls{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+  }
 
-    .carousel-header p {
-        opacity: 0.9;
-        font-size: 0.9em;
-    }
+  input[type="number"]{
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.02);
+    color:inherit;
+    outline:none;
+  }
 
-    /* Carousel Wrapper */
-    .carousel-wrapper {
-        position: relative;
-        width: 100%;
-        height: 500px;
-        overflow: hidden;
-        background: #000;
-    }
+  button {
+    padding:10px 14px;
+    border-radius:10px;
+    border:0;
+    cursor:pointer;
+    background:linear-gradient(180deg,var(--accent), #3b82f6);
+    color:#06202f;
+    font-weight:700;
+  }
 
-    /* Slides Container */
-    .carousel-slides {
-        display: flex;
-        height: 100%;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        will-change: transform;
-    }
+  .small {
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.06);
+    color:var(--muted);
+    padding:8px 10px;
+    border-radius:8px;
+    font-weight:600;
+  }
 
-    .carousel-slide {
-        min-width: 100%;
-        height: 100%;
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+  .msg {
+    margin-top:8px;
+    min-height:26px;
+    font-weight:600;
+  }
 
-    .carousel-slide img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
+  .msg.low { color:#fbbf24 }       /* too low - amber */
+  .msg.high{ color:#fb7185 }      /* too high - red */
+  .msg.ok  { color:var(--success) }/* correct */
 
-    /* Slide Caption */
-    .slide-caption {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-        color: white;
-        padding: 30px 20px 20px;
-        transform: translateY(100%);
-        transition: transform 0.4s ease;
-    }
+  .meta {
+    margin-top:12px;
+    color:var(--muted);
+    font-size:13px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
 
-    .carousel-slide.active .slide-caption {
-        transform: translateY(0);
-    }
+  /* Confetti area fixed above the app so it overflows nicely */
+  .confetti-layer {
+    pointer-events:none;
+    position:fixed;
+    left:0; top:0;
+    width:100%; height:100%;
+    overflow:hidden;
+    z-index:9999;
+  }
 
-    .slide-caption h3 {
-        font-size: 1.5em;
-        margin-bottom: 8px;
-    }
+  .confetti {
+    position: absolute;
+    width:10px;
+    height:14px;
+    opacity:0.95;
+    transform-origin:center;
+    will-change: transform, opacity;
+    animation: fall linear forwards;
+    border-radius:2px;
+  }
 
-    .slide-caption p {
-        font-size: 0.95em;
-        opacity: 0.9;
-    }
+  @keyframes fall {
+    0% { transform: translateY(-10vh) rotateZ(0deg) translateX(0); opacity:1; }
+    100% { transform: translateY(110vh) rotateZ(720deg) translateX(var(--tx)); opacity:0.85; }
+  }
 
-    /* Navigation Buttons */
-    .carousel-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.9);
-        border: none;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.5em;
-        color: #333;
-        transition: all 0.3s ease;
-        z-index: 10;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
+  /* small sparkle for final message */
+  .celebrate {
+    display:inline-block;
+    margin-left:8px;
+    transform-origin:center;
+    animation: pop .9s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes pop {
+    0% { transform: scale(.2) rotate(-20deg); opacity:0 }
+    60% { transform: scale(1.1) rotate(10deg); opacity:1 }
+    100% { transform: scale(1) rotate(0deg); opacity:1 }
+  }
 
-    .carousel-btn:hover {
-        background: white;
-        transform: translateY(-50%) scale(1.1);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .carousel-btn:active {
-        transform: translateY(-50%) scale(0.95);
-    }
-
-    .carousel-btn.disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-    }
-
-    .btn-prev {
-        left: 20px;
-    }
-
-    .btn-next {
-        right: 20px;
-    }
-
-    /* Indicators */
-    .carousel-indicators {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 10px;
-        z-index: 10;
-    }
-
-    .indicator {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.5);
-        border: 2px solid white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .indicator:hover {
-        background: rgba(255, 255, 255, 0.8);
-        transform: scale(1.2);
-    }
-
-    .indicator.active {
-        background: white;
-        width: 30px;
-        border-radius: 6px;
-    }
-
-    /* Controls Panel */
-    .carousel-controls {
-        padding: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #f5f5f5;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .counter {
-        font-size: 1.1em;
-        color: #666;
-        font-weight: bold;
-    }
-
-    .control-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    .control-btn {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.95em;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-
-    .play-pause-btn {
-        background: #667eea;
-        color: white;
-    }
-
-    .play-pause-btn:hover {
-        background: #5568d3;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .play-pause-btn.paused {
-        background: #e74c3c;
-    }
-
-    .play-pause-btn.paused:hover {
-        background: #c0392b;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .carousel-wrapper {
-            height: 350px;
-        }
-
-        .carousel-header h1 {
-            font-size: 1.5em;
-        }
-
-        .carousel-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 1.2em;
-        }
-
-        .btn-prev {
-            left: 10px;
-        }
-
-        .btn-next {
-            right: 10px;
-        }
-
-        .slide-caption h3 {
-            font-size: 1.2em;
-        }
-
-        .slide-caption p {
-            font-size: 0.85em;
-        }
-
-        .carousel-controls {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .counter {
-            text-align: center;
-        }
-
-        .control-buttons {
-            justify-content: center;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .carousel-wrapper {
-            height: 250px;
-        }
-
-        .carousel-header {
-            padding: 15px;
-        }
-
-        .carousel-header h1 {
-            font-size: 1.3em;
-        }
-
-        .slide-caption {
-            padding: 20px 15px 15px;
-        }
-
-        .indicator {
-            width: 10px;
-            height: 10px;
-        }
-
-        .indicator.active {
-            width: 24px;
-        }
-    }
-
-    /* Loading Animation */
-    .loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 1.2em;
-    }
-
-    /* Progress Bar */
-    .progress-bar {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        height: 4px;
-        background: rgba(102, 126, 234, 0.8);
-        width: 0%;
-        transition: width 0.1s linear;
-        z-index: 11;
-    }
+  /* responsive */
+  @media (max-width:520px){
+    .app{ padding:16px }
+    input[type="number"]{ padding:10px }
+    button{ padding:9px 12px }
+  }
 </style>
-```
-
 </head>
 <body>
-    <div class="carousel-container">
-        <div class="carousel-header">
-            <h1>🎨 Carousel Chuyên Nghiệp</h1>
-            <p>Auto-play mỗi 3 giây | Swipe để chuyển slide | Responsive</p>
-        </div>
+  <div class="app" role="application" aria-labelledby="title">
+    <h1 id="title">🎯 Game: Đoán Số (1–100)</h1>
+    <p class="lead">Máy sẽ chọn 1 số ngẫu nhiên từ 1 đến 100. Bạn nhập dự đoán, JS sẽ cho biết "quá cao", "quá thấp" hoặc "chính xác".</p>
 
-```
-    <div class="carousel-wrapper">
-        <!-- Progress Bar -->
-        <div class="progress-bar" id="progressBar"></div>
-
-        <!-- Slides -->
-        <div class="carousel-slides" id="carouselSlides">
-            <!-- Slide 1 -->
-            <div class="carousel-slide active">
-                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop" alt="Mountain Landscape">
-                <div class="slide-caption">
-                    <h3>Núi Đồ Sộ</h3>
-                    <p>Khung cảnh thiên nhiên hùng vĩ với dãy núi tuyệt đẹp</p>
-                </div>
-            </div>
-
-            <!-- Slide 2 -->
-            <div class="carousel-slide">
-                <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=800&fit=crop" alt="Forest Path">
-                <div class="slide-caption">
-                    <h3>Con Đường Rừng</h3>
-                    <p>Khám phá vẻ đẹp hoang sơ của thiên nhiên</p>
-                </div>
-            </div>
-
-            <!-- Slide 3 -->
-            <div class="carousel-slide">
-                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=800&fit=crop" alt="Beach Sunset">
-                <div class="slide-caption">
-                    <h3>Hoàng Hôn Biển</h3>
-                    <p>Cảnh hoàng hôn tuyệt đẹp bên bờ biển xanh</p>
-                </div>
-            </div>
-
-            <!-- Slide 4 -->
-            <div class="carousel-slide">
-                <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&h=800&fit=crop" alt="Night Sky">
-                <div class="slide-caption">
-                    <h3>Bầu Trời Đêm</h3>
-                    <p>Dải ngân hà lung linh giữa đêm đầy sao</p>
-                </div>
-            </div>
-
-            <!-- Slide 5 -->
-            <div class="carousel-slide">
-                <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&h=800&fit=crop" alt="Autumn Forest">
-                <div class="slide-caption">
-                    <h3>Rừng Mùa Thu</h3>
-                    <p>Sắc vàng cam rực rỡ của mùa lá vàng</p>
-                </div>
-            </div>
-
-            <!-- Slide 6 -->
-            <div class="carousel-slide">
-                <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=800&fit=crop" alt="Waterfall">
-                <div class="slide-caption">
-                    <h3>Thác Nước Hùng Vĩ</h3>
-                    <p>Dòng nước đổ xuống giữa núi rừng xanh tươi</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation Buttons -->
-        <button class="carousel-btn btn-prev" id="btnPrev" aria-label="Previous slide">❮</button>
-        <button class="carousel-btn btn-next" id="btnNext" aria-label="Next slide">❯</button>
-
-        <!-- Indicators -->
-        <div class="carousel-indicators" id="indicators"></div>
+    <div class="controls" aria-live="polite">
+      <input id="guessInput" type="number" inputmode="numeric" min="1" max="100" placeholder="Nhập số (1–100)" aria-label="Nhập số đoán (1 đến 100)">
+      <button id="submitBtn">Đoán</button>
+      <button id="resetBtn" class="small">Chơi lại</button>
     </div>
 
-    <div class="carousel-controls">
-        <div class="counter" id="counter">1 / 6</div>
-        <div class="control-buttons">
-            <button class="control-btn play-pause-btn" id="playPauseBtn">⏸ Pause</button>
-        </div>
+    <div id="message" class="msg" aria-live="assertive"></div>
+
+    <div class="meta">
+      <div id="tries">Số lần thử: 0</div>
+      <div id="rangeInfo">Phạm vi: 1–100</div>
     </div>
-</div>
+  </div>
+
+  <!-- confetti container (created hidden, used when win) -->
+  <div id="confettiLayer" class="confetti-layer" aria-hidden="true"></div>
 
 <script>
-    /**
-     * CAROUSEL CLASS - Quản lý toàn bộ logic carousel
-     * 
-     * LOGIC XỬ LÝ INDEX (Tránh out-of-bound):
-     * - Sử dụng modulo (%) để wrap index trong range [0, total-1]
-     * - Next: (index + 1) % total → khi index = 5, next = (5+1) % 6 = 0
-     * - Prev: (index - 1 + total) % total → khi index = 0, prev = (0-1+6) % 6 = 5
-     * - Công thức này đảm bảo index không bao giờ < 0 hoặc >= total
-     */
-    class Carousel {
-        constructor() {
-            // DOM Elements
-            this.slidesContainer = document.getElementById('carouselSlides');
-            this.slides = Array.from(this.slidesContainer.children);
-            this.btnPrev = document.getElementById('btnPrev');
-            this.btnNext = document.getElementById('btnNext');
-            this.indicatorsContainer = document.getElementById('indicators');
-            this.counter = document.getElementById('counter');
-            this.playPauseBtn = document.getElementById('playPauseBtn');
-            this.progressBar = document.getElementById('progressBar');
+/*
+  Game Đoán Số (1-100)
+  - Gen số random: Math.floor(Math.random() * 100) + 1
+  - Ghi đếm số lần thử
+  - Validate input: parseInt + range check + NaN guard
+  - Khi đúng: show confetti bằng cách tạo nhiều div .confetti với random properties và CSS animation fall
+  - Disable input khi thắng, cho phép chơi lại
+*/
 
-            // State
-            this.currentIndex = 0;
-            this.totalSlides = this.slides.length;
-            this.isPlaying = true;
-            this.autoPlayInterval = null;
-            this.progressInterval = null;
-            this.transitionInProgress = false; // Flag để tránh spam click
+(function(){
+  // ------- state (closure-scoped) -------
+  const MIN = 1, MAX = 100;
+  let target = generateRandom();
+  let tries = 0;
+  let finished = false;
 
-            // Touch/Swipe variables
-            this.touchStartX = 0;
-            this.touchEndX = 0;
-            this.touchThreshold = 50; // Minimum swipe distance in pixels
+  // ------- dom refs -------
+  const inputEl = document.getElementById('guessInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const msgEl = document.getElementById('message');
+  const triesEl = document.getElementById('tries');
+  const rangeEl = document.getElementById('rangeInfo');
+  const confettiLayer = document.getElementById('confettiLayer');
 
-            // Timing
-            this.autoPlayDelay = 3000; // 3 seconds
-            this.progressUpdateInterval = 30; // Update progress every 30ms
+  // ------- helpers -------
+  function generateRandom() {
+    // Sinh số nguyên ngẫu nhiên trong khoảng [MIN, MAX], inclusive
+    // Math.random() -> [0,1) so multiply by (MAX - MIN + 1) then floor + MIN
+    return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
+  }
 
-            // Initialize
-            this.init();
-        }
+  function updateTries() {
+    triesEl.textContent = `Số lần thử: ${tries}`;
+  }
 
-        init() {
-            this.createIndicators();
-            this.attachEventListeners();
-            this.startAutoPlay();
-            this.updateCarousel();
-        }
+  function setMessage(text, cls) {
+    msgEl.textContent = text;
+    msgEl.className = 'msg'; // reset classes
+    if (cls) msgEl.classList.add(cls);
+  }
 
-        /**
-         * TẠO INDICATORS (Dots)
-         * Tạo động dựa trên số lượng slides
-         */
-        createIndicators() {
-            this.slides.forEach((_, index) => {
-                const indicator = document.createElement('div');
-                indicator.classList.add('indicator');
-                if (index === 0) indicator.classList.add('active');
-                indicator.addEventListener('click', () => this.goToSlide(index));
-                this.indicatorsContainer.appendChild(indicator);
-            });
-            this.indicators = Array.from(this.indicatorsContainer.children);
-        }
+  function validateAndParse(value) {
+    // value could be string from input; ensure integer and within range
+    if (value === null || value === undefined) return { ok:false, reason:'empty' };
+    // Trim & parse
+    const num = Number(value);
+    if (Number.isNaN(num)) return { ok:false, reason:'nan' };
+    // Reject decimals: require integer
+    const intVal = Math.trunc(num);
+    if (intVal !== num) return { ok:false, reason:'not-integer' };
+    if (intVal < MIN || intVal > MAX) return { ok:false, reason:'out-of-range' };
+    return { ok:true, value:intVal };
+  }
 
-        /**
-         * GẮN EVENT LISTENERS
-         * Sử dụng event delegation và passive listeners để tối ưu
-         */
-        attachEventListeners() {
-            // Navigation buttons - Có debounce logic bên trong goToSlide
-            this.btnPrev.addEventListener('click', () => this.prevSlide());
-            this.btnNext.addEventListener('click', () => this.nextSlide());
+  // ------- confetti -------
+  function spawnConfetti(count = 60) {
+    // Clear existing just in case
+    confettiLayer.innerHTML = '';
+    // Create many small divs with random color/position/animation duration/tx offset
+    const colors = ['#ef4444','#f97316','#f59e0b','#facc15','#10b981','#06b6d4','#3b82f6','#8b5cf6','#ec4899'];
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    for (let i=0;i<count;i++){
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      const w = 6 + Math.random()*12; // width
+      const h = 8 + Math.random()*14; // height
+      el.style.width = `${w}px`;
+      el.style.height = `${h}px`;
+      el.style.background = colors[Math.floor(Math.random()*colors.length)];
+      // random start left within viewport (0..vw)
+      const left = Math.random() * 100; // percent
+      el.style.left = `${left}%`;
+      // tx is horizontal drift amount for animation end (random px)
+      const tx = (Math.random()*200 - 100).toFixed(2) + 'px';
+      el.style.setProperty('--tx', tx);
+      // random animation duration & delay
+      const dur = 3 + Math.random()*2.5; // 3s - 5.5s
+      const delay = Math.random() * 0.6; // up to 0.6s
+      el.style.animationDuration = `${dur}s`;
+      el.style.animationDelay = `${delay}s`;
+      // random rotation start
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+      // small tilt using transform-origin variation
+      el.style.top = `${-5 - Math.random()*10}vh`;
+      confettiLayer.appendChild(el);
+    }
+    // Remove confetti after animation finished to free DOM
+    setTimeout(()=> confettiLayer.innerHTML = '', 7000);
+  }
 
-            // Play/Pause button
-            this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
-
-            // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') this.prevSlide();
-                if (e.key === 'ArrowRight') this.nextSlide();
-                if (e.key === ' ') {
-                    e.preventDefault();
-                    this.togglePlayPause();
-                }
-            });
-
-            // Touch events for swipe (passive: true để tối ưu scroll performance)
-            this.slidesContainer.addEventListener('touchstart', (e) => {
-                this.touchStartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
-            this.slidesContainer.addEventListener('touchend', (e) => {
-                this.touchEndX = e.changedTouches[0].screenX;
-                this.handleSwipe();
-            });
-
-            // Pause on hover (UX improvement)
-            this.slidesContainer.addEventListener('mouseenter', () => {
-                if (this.isPlaying) {
-                    this.pauseAutoPlay();
-                }
-            });
-
-            this.slidesContainer.addEventListener('mouseleave', () => {
-                if (this.isPlaying) {
-                    this.startAutoPlay();
-                }
-            });
-
-            // Visibility change - pause when tab is hidden
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    this.pauseAutoPlay();
-                } else if (this.isPlaying) {
-                    this.startAutoPlay();
-                }
-            });
-        }
-
-        /**
-         * XỬ LÝ SWIPE GESTURE
-         * Detect swipe direction và trigger slide tương ứng
-         */
-        handleSwipe() {
-            const swipeDistance = this.touchEndX - this.touchStartX;
-            
-            if (Math.abs(swipeDistance) > this.touchThreshold) {
-                if (swipeDistance > 0) {
-                    // Swipe right -> previous
-                    this.prevSlide();
-                } else {
-                    // Swipe left -> next
-                    this.nextSlide();
-                }
-            }
-        }
-
-        /**
-         * NEXT SLIDE - Với xử lý index an toàn
-         * Sử dụng modulo để wrap về đầu khi đến cuối
-         */
-        nextSlide() {
-            // LOGIC: (currentIndex + 1) % totalSlides
-            // Ví dụ: index = 5, total = 6 → (5 + 1) % 6 = 0 (quay về đầu)
-            const nextIndex = (this.currentIndex + 1) % this.totalSlides;
-            this.goToSlide(nextIndex);
-        }
-
-        /**
-         * PREVIOUS SLIDE - Với xử lý index âm
-         * Thêm totalSlides trước khi modulo để tránh số âm
-         */
-        prevSlide() {
-            // LOGIC: (currentIndex - 1 + totalSlides) % totalSlides
-            // Ví dụ: index = 0, total = 6 → (0 - 1 + 6) % 6 = 5 (quay về cuối)
-            // Thêm totalSlides đảm bảo không bao giờ có số âm trong modulo
-            const prevIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
-            this.goToSlide(prevIndex);
-        }
-
-        /**
-         * GO TO SPECIFIC SLIDE
-         * Với debounce logic để tránh spam click
-         */
-        goToSlide(index) {
-            // DEBOUNCE: Tránh spam click trong lúc transition
-            if (this.transitionInProgress) return;
-
-            // Validate index trong range (double-check)
-            if (index < 0 || index >= this.totalSlides) return;
-
-            this.transitionInProgress = true;
-            this.currentIndex = index;
-            this.updateCarousel();
-
-            // Reset transition flag sau khi animation xong (600ms)
-            setTimeout(() => {
-                this.transitionInProgress = false;
-            }, 600);
-
-            // Reset auto-play khi user tương tác
-            if (this.isPlaying) {
-                this.startAutoPlay();
-            }
-        }
-
-        /**
-         * UPDATE CAROUSEL
-         * PERFORMANCE: Sử dụng transform thay vì left/right
-         * Transform được GPU-accelerated, mượt mà hơn nhiều
-         */
-        updateCarousel() {
-            // Transform: translateX(-100% * index)
-            // Ví dụ: index = 2 → translateX(-200%)
-            const offset = -this.currentIndex * 100;
-            this.slidesContainer.style.transform = `translateX(${offset}%)`;
-
-            // Update active states
-            this.slides.forEach((slide, i) => {
-                slide.classList.toggle('active', i === this.currentIndex);
-            });
-
-            this.indicators.forEach((indicator, i) => {
-                indicator.classList.toggle('active', i === this.currentIndex);
-            });
-
-            // Update counter
-            this.counter.textContent = `${this.currentIndex + 1} / ${this.totalSlides}`;
-        }
-
-        /**
-         * AUTO-PLAY LOGIC
-         * Với progress bar animation
-         */
-        startAutoPlay() {
-            // Clear existing intervals
-            this.pauseAutoPlay();
-
-            // Start new interval
-            this.autoPlayInterval = setInterval(() => {
-                this.nextSlide();
-            }, this.autoPlayDelay);
-
-            // Start progress bar
-            this.startProgressBar();
-        }
-
-        pauseAutoPlay() {
-            if (this.autoPlayInterval) {
-                clearInterval(this.autoPlayInterval);
-                this.autoPlayInterval = null;
-            }
-            this.stopProgressBar();
-        }
-
-        /**
-         * PROGRESS BAR ANIMATION
-         * Smooth fill từ 0-100% trong 3 giây
-         */
-        startProgressBar() {
-            this.stopProgressBar();
-            
-            let progress = 0;
-            const increment = (this.progressUpdateInterval / this.autoPlayDelay) * 100;
-            
-            this.progressInterval = setInterval(() => {
-                progress += increment;
-                if (progress >= 100) {
-                    progress = 0;
-                }
-                this.progressBar.style.width = `${progress}%`;
-            }, this.progressUpdateInterval);
-        }
-
-        stopProgressBar() {
-            if (this.progressInterval) {
-                clearInterval(this.progressInterval);
-                this.progressInterval = null;
-            }
-            this.progressBar.style.width = '0%';
-        }
-
-        /**
-         * TOGGLE PLAY/PAUSE
-         */
-        togglePlayPause() {
-            this.isPlaying = !this.isPlaying;
-
-            if (this.isPlaying) {
-                this.startAutoPlay();
-                this.playPauseBtn.textContent = '⏸ Pause';
-                this.playPauseBtn.classList.remove('paused');
-            } else {
-                this.pauseAutoPlay();
-                this.playPauseBtn.textContent = '▶ Play';
-                this.playPauseBtn.classList.add('paused');
-            }
-        }
+  // ------- game actions -------
+  function handleGuess() {
+    if (finished) return;
+    const raw = inputEl.value;
+    const parsed = validateAndParse(raw);
+    if (!parsed.ok) {
+      // choose message based on reason
+      switch(parsed.reason){
+        case 'empty': setMessage('Vui lòng nhập 1 số.', 'high'); break;
+        case 'nan': setMessage('Không phải số hợp lệ.', 'high'); break;
+        case 'not-integer': setMessage('Chỉ nhập số nguyên (không nhập thập phân).', 'high'); break;
+        case 'out-of-range': setMessage(`Nhập số trong khoảng ${MIN}–${MAX}.`, 'high'); break;
+        default: setMessage('Giá trị không hợp lệ.', 'high');
+      }
+      return;
     }
 
-    /**
-     * KHỞI TẠO CAROUSEL
-     * Đợi DOM load xong
-     */
-    document.addEventListener('DOMContentLoaded', () => {
-        const carousel = new Carousel();
+    const guess = parsed.value;
+    tries++;
+    updateTries();
 
-        // Log thông tin debug (có thể remove trong production)
-        console.log('🎨 Carousel initialized');
-        console.log(`📊 Total slides: ${carousel.totalSlides}`);
-        console.log('⚙️ Auto-play: 3 seconds');
-        console.log('✨ Features: Swipe, Keyboard, Auto-pause on hover');
-    });
+    if (guess === target) {
+      finished = true;
+      setMessage(`🎉 Chính xác! Bạn đoán đúng sau ${tries} lượt.`, 'ok');
+      // visual confetti
+      spawnConfetti(90);
+      // small celebrate icon
+      const celeb = document.createElement('span');
+      celeb.className = 'celebrate';
+      celeb.textContent = '✨';
+      msgEl.appendChild(celeb);
+      // disable input & submit
+      inputEl.disabled = true;
+      submitBtn.disabled = true;
+    } else if (guess < target) {
+      setMessage('Quá thấp — thử số lớn hơn.', 'low');
+    } else {
+      setMessage('Quá cao — thử số nhỏ hơn.', 'high');
+    }
 
-    /**
-     * GIẢI THÍCH TỔNG QUAN LOGIC:
-     * 
-     * 1. XỬ LÝ INDEX AN TOÀN:
-     *    - Modulo operator (%) để wrap index
-     *    - Không bao giờ out-of-bound
-     *    - Infinite loop tự nhiên
-     * 
-     * 2. TỐI ƯU PERFORMANCE:
-     *    - Transform thay vì left/right (GPU-accelerated)
-     *    - will-change CSS hint
-     *    - Debounce cho user interactions
-     *    - Passive event listeners
-     *    - RequestAnimationFrame có thể thêm nếu cần animation phức tạp
-     * 
-     * 3. UX IMPROVEMENTS:
-     *    - Auto-pause khi hover
-     *    - Progress bar visual feedback
-     *    - Keyboard navigation
-     *    - Touch/swipe support
-     *    - Pause khi tab hidden (tiết kiệm tài nguyên)
-     * 
-     * 4. RESPONSIVE:
-     *    - Media queries cho mobile/tablet
-     *    - Touch events cho mobile
-     *    - Flexible sizing
-     * 
-     * 5. ERROR HANDLING:
-     *    - Validation index trước khi goToSlide
-     *    - Transition flag để tránh spam
-     *    - Clear intervals khi pause
-     */
+    // helpful hint: update range displayed (optional)
+    rangeEl.textContent = `Phạm vi: ${MIN}–${MAX}`;
+    // keep focus for quick retry, but don't focus if finished
+    if (!finished) {
+      inputEl.focus();
+      inputEl.select();
+    }
+  }
+
+  function resetGame() {
+    target = generateRandom();
+    tries = 0;
+    finished = false;
+    updateTries();
+    setMessage('Bắt đầu lại — nhập đoán mới!', null);
+    inputEl.disabled = false;
+    submitBtn.disabled = false;
+    inputEl.value = '';
+    inputEl.focus();
+    // clear confetti if any
+    confettiLayer.innerHTML = '';
+    rangeEl.textContent = `Phạm vi: ${MIN}–${MAX}`;
+    // console log for debugging (won't be shown to user)
+    // console.log('New target:', target);
+  }
+
+  // ------- wire events -------
+  submitBtn.addEventListener('click', handleGuess);
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleGuess();
+  });
+  resetBtn.addEventListener('click', resetGame);
+
+  // init UI
+  updateTries();
+  setMessage('Chúc may mắn! Nhập số và nhấn "Đoán".');
+  // (Note: for fairness, we don't reveal target; during dev you can console.log(target) if needed)
+})();
 </script>
-
 </body>
 </html>
+
