@@ -1,178 +1,753 @@
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Todo App – LocalStorage</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carousel Hình Ảnh Chuyên Nghiệp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<style>
     body {
-        font-family: Arial, sans-serif;
-        background: #f5f5f5;
-        padding: 40px;
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
         display: flex;
         justify-content: center;
-    }
-
-    .container {
-        width: 450px;
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        display: grid;
-        gap: 20px; /* GRID */
-    }
-
-    h2 { margin: 0; }
-
-    .input-area {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-    }
-
-    input {
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-
-    button {
-        padding: 10px 14px;
-        border: none;
-        background: #007bff;
-        color: white;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    button:hover { opacity: 0.8; }
-
-    .list {
-        display: grid;
-        gap: 12px;
-    }
-
-    .task {
-        background: #fafafa;
-        border: 1px solid #ddd;
-        padding: 10px;
-        display: grid;
-        grid-template-columns: 1fr auto auto;
         align-items: center;
-        gap: 10px;
-        border-radius: 4px;
+        padding: 20px;
     }
 
-    .edit-btn { background: orange; }
-    .delete-btn { background: red; }
+    .carousel-container {
+        max-width: 900px;
+        width: 100%;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Header */
+    .carousel-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .carousel-header h1 {
+        font-size: 2em;
+        margin-bottom: 5px;
+    }
+
+    .carousel-header p {
+        opacity: 0.9;
+        font-size: 0.9em;
+    }
+
+    /* Carousel Wrapper */
+    .carousel-wrapper {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        overflow: hidden;
+        background: #000;
+    }
+
+    /* Slides Container */
+    .carousel-slides {
+        display: flex;
+        height: 100%;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform;
+    }
+
+    .carousel-slide {
+        min-width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .carousel-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Slide Caption */
+    .slide-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        color: white;
+        padding: 30px 20px 20px;
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+    }
+
+    .carousel-slide.active .slide-caption {
+        transform: translateY(0);
+    }
+
+    .slide-caption h3 {
+        font-size: 1.5em;
+        margin-bottom: 8px;
+    }
+
+    .slide-caption p {
+        font-size: 0.95em;
+        opacity: 0.9;
+    }
+
+    /* Navigation Buttons */
+    .carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5em;
+        color: #333;
+        transition: all 0.3s ease;
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .carousel-btn:hover {
+        background: white;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .carousel-btn:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    .carousel-btn.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .btn-prev {
+        left: 20px;
+    }
+
+    .btn-next {
+        right: 20px;
+    }
+
+    /* Indicators */
+    .carousel-indicators {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+    }
+
+    .indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        border: 2px solid white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .indicator:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: scale(1.2);
+    }
+
+    .indicator.active {
+        background: white;
+        width: 30px;
+        border-radius: 6px;
+    }
+
+    /* Controls Panel */
+    .carousel-controls {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f5f5f5;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .counter {
+        font-size: 1.1em;
+        color: #666;
+        font-weight: bold;
+    }
+
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .control-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95em;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .play-pause-btn {
+        background: #667eea;
+        color: white;
+    }
+
+    .play-pause-btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .play-pause-btn.paused {
+        background: #e74c3c;
+    }
+
+    .play-pause-btn.paused:hover {
+        background: #c0392b;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .carousel-wrapper {
+            height: 350px;
+        }
+
+        .carousel-header h1 {
+            font-size: 1.5em;
+        }
+
+        .carousel-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+        }
+
+        .btn-prev {
+            left: 10px;
+        }
+
+        .btn-next {
+            right: 10px;
+        }
+
+        .slide-caption h3 {
+            font-size: 1.2em;
+        }
+
+        .slide-caption p {
+            font-size: 0.85em;
+        }
+
+        .carousel-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .counter {
+            text-align: center;
+        }
+
+        .control-buttons {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .carousel-wrapper {
+            height: 250px;
+        }
+
+        .carousel-header {
+            padding: 15px;
+        }
+
+        .carousel-header h1 {
+            font-size: 1.3em;
+        }
+
+        .slide-caption {
+            padding: 20px 15px 15px;
+        }
+
+        .indicator {
+            width: 10px;
+            height: 10px;
+        }
+
+        .indicator.active {
+            width: 24px;
+        }
+    }
+
+    /* Loading Animation */
+    .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1.2em;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: rgba(102, 126, 234, 0.8);
+        width: 0%;
+        transition: width 0.1s linear;
+        z-index: 11;
+    }
 </style>
+```
+
 </head>
-
 <body>
+    <div class="carousel-container">
+        <div class="carousel-header">
+            <h1>🎨 Carousel Chuyên Nghiệp</h1>
+            <p>Auto-play mỗi 3 giây | Swipe để chuyển slide | Responsive</p>
+        </div>
 
-<div class="container">
-    <h2>Todo List – LocalStorage</h2>
+```
+    <div class="carousel-wrapper">
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progressBar"></div>
 
-    <div class="input-area">
-        <input id="taskInput" placeholder="Nhập task...">
-        <button id="addBtn">Thêm</button>
+        <!-- Slides -->
+        <div class="carousel-slides" id="carouselSlides">
+            <!-- Slide 1 -->
+            <div class="carousel-slide active">
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop" alt="Mountain Landscape">
+                <div class="slide-caption">
+                    <h3>Núi Đồ Sộ</h3>
+                    <p>Khung cảnh thiên nhiên hùng vĩ với dãy núi tuyệt đẹp</p>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=800&fit=crop" alt="Forest Path">
+                <div class="slide-caption">
+                    <h3>Con Đường Rừng</h3>
+                    <p>Khám phá vẻ đẹp hoang sơ của thiên nhiên</p>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=800&fit=crop" alt="Beach Sunset">
+                <div class="slide-caption">
+                    <h3>Hoàng Hôn Biển</h3>
+                    <p>Cảnh hoàng hôn tuyệt đẹp bên bờ biển xanh</p>
+                </div>
+            </div>
+
+            <!-- Slide 4 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&h=800&fit=crop" alt="Night Sky">
+                <div class="slide-caption">
+                    <h3>Bầu Trời Đêm</h3>
+                    <p>Dải ngân hà lung linh giữa đêm đầy sao</p>
+                </div>
+            </div>
+
+            <!-- Slide 5 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&h=800&fit=crop" alt="Autumn Forest">
+                <div class="slide-caption">
+                    <h3>Rừng Mùa Thu</h3>
+                    <p>Sắc vàng cam rực rỡ của mùa lá vàng</p>
+                </div>
+            </div>
+
+            <!-- Slide 6 -->
+            <div class="carousel-slide">
+                <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=800&fit=crop" alt="Waterfall">
+                <div class="slide-caption">
+                    <h3>Thác Nước Hùng Vĩ</h3>
+                    <p>Dòng nước đổ xuống giữa núi rừng xanh tươi</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <button class="carousel-btn btn-prev" id="btnPrev" aria-label="Previous slide">❮</button>
+        <button class="carousel-btn btn-next" id="btnNext" aria-label="Next slide">❯</button>
+
+        <!-- Indicators -->
+        <div class="carousel-indicators" id="indicators"></div>
     </div>
 
-    <div class="list" id="taskList"></div>
+    <div class="carousel-controls">
+        <div class="counter" id="counter">1 / 6</div>
+        <div class="control-buttons">
+            <button class="control-btn play-pause-btn" id="playPauseBtn">⏸ Pause</button>
+        </div>
+    </div>
 </div>
 
 <script>
-// ================== 1. KHAI BÁO STATE ==================
-// Mình dùng 1 mảng "tasks" để lưu trạng thái toàn bộ dữ liệu.
-// Lý do: mảng dễ quản lý, dễ tìm index, dễ cập nhật và render lại.
-let tasks = [];
+    /**
+     * CAROUSEL CLASS - Quản lý toàn bộ logic carousel
+     * 
+     * LOGIC XỬ LÝ INDEX (Tránh out-of-bound):
+     * - Sử dụng modulo (%) để wrap index trong range [0, total-1]
+     * - Next: (index + 1) % total → khi index = 5, next = (5+1) % 6 = 0
+     * - Prev: (index - 1 + total) % total → khi index = 0, prev = (0-1+6) % 6 = 5
+     * - Công thức này đảm bảo index không bao giờ < 0 hoặc >= total
+     */
+    class Carousel {
+        constructor() {
+            // DOM Elements
+            this.slidesContainer = document.getElementById('carouselSlides');
+            this.slides = Array.from(this.slidesContainer.children);
+            this.btnPrev = document.getElementById('btnPrev');
+            this.btnNext = document.getElementById('btnNext');
+            this.indicatorsContainer = document.getElementById('indicators');
+            this.counter = document.getElementById('counter');
+            this.playPauseBtn = document.getElementById('playPauseBtn');
+            this.progressBar = document.getElementById('progressBar');
 
+            // State
+            this.currentIndex = 0;
+            this.totalSlides = this.slides.length;
+            this.isPlaying = true;
+            this.autoPlayInterval = null;
+            this.progressInterval = null;
+            this.transitionInProgress = false; // Flag để tránh spam click
 
-// ================== 2. LOAD DỮ LIỆU TỪ LOCALSTORAGE ==================
-function loadFromStorage() {
-    const data = localStorage.getItem("todo-data");
+            // Touch/Swipe variables
+            this.touchStartX = 0;
+            this.touchEndX = 0;
+            this.touchThreshold = 50; // Minimum swipe distance in pixels
 
-    // parse JSON, nếu null thì gán []
-    tasks = data ? JSON.parse(data) : [];
-}
-loadFromStorage();
+            // Timing
+            this.autoPlayDelay = 3000; // 3 seconds
+            this.progressUpdateInterval = 30; // Update progress every 30ms
 
+            // Initialize
+            this.init();
+        }
 
-// ================== 3. LƯU LẠI LOCALSTORAGE ==================
-function saveToStorage() {
-    localStorage.setItem("todo-data", JSON.stringify(tasks));
-}
+        init() {
+            this.createIndicators();
+            this.attachEventListeners();
+            this.startAutoPlay();
+            this.updateCarousel();
+        }
 
+        /**
+         * TẠO INDICATORS (Dots)
+         * Tạo động dựa trên số lượng slides
+         */
+        createIndicators() {
+            this.slides.forEach((_, index) => {
+                const indicator = document.createElement('div');
+                indicator.classList.add('indicator');
+                if (index === 0) indicator.classList.add('active');
+                indicator.addEventListener('click', () => this.goToSlide(index));
+                this.indicatorsContainer.appendChild(indicator);
+            });
+            this.indicators = Array.from(this.indicatorsContainer.children);
+        }
 
-// ================== 4. HÀM RENDER DANH SÁCH ==================
-function render() {
-    const list = document.getElementById("taskList");
-    list.innerHTML = ""; // xoá toàn bộ DOM cũ → tránh trùng lặp
+        /**
+         * GẮN EVENT LISTENERS
+         * Sử dụng event delegation và passive listeners để tối ưu
+         */
+        attachEventListeners() {
+            // Navigation buttons - Có debounce logic bên trong goToSlide
+            this.btnPrev.addEventListener('click', () => this.prevSlide());
+            this.btnNext.addEventListener('click', () => this.nextSlide());
 
-    tasks.forEach((task, index) => {
-        const div = document.createElement("div");
-        div.className = "task";
+            // Play/Pause button
+            this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
 
-        const text = document.createElement("span");
-        text.textContent = task;
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') this.prevSlide();
+                if (e.key === 'ArrowRight') this.nextSlide();
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    this.togglePlayPause();
+                }
+            });
 
-        const editBtn = document.createElement("button");
-        editBtn.textContent = "Edit";
-        editBtn.className = "edit-btn";
+            // Touch events for swipe (passive: true để tối ưu scroll performance)
+            this.slidesContainer.addEventListener('touchstart', (e) => {
+                this.touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
 
-        editBtn.onclick = () => {
-            const newText = prompt("Chỉnh sửa task:", task);
+            this.slidesContainer.addEventListener('touchend', (e) => {
+                this.touchEndX = e.changedTouches[0].screenX;
+                this.handleSwipe();
+            });
 
-            // Kiểm tra người dùng bấm Cancel hoặc nhập rỗng
-            if (newText === null || newText.trim() === "") return;
+            // Pause on hover (UX improvement)
+            this.slidesContainer.addEventListener('mouseenter', () => {
+                if (this.isPlaying) {
+                    this.pauseAutoPlay();
+                }
+            });
 
-            tasks[index] = newText.trim(); // cập nhật mảng
-            saveToStorage();
-            render(); // render lại giao diện
-        };
+            this.slidesContainer.addEventListener('mouseleave', () => {
+                if (this.isPlaying) {
+                    this.startAutoPlay();
+                }
+            });
 
-        const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Xóa";
-        deleteBtn.className = "delete-btn";
+            // Visibility change - pause when tab is hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    this.pauseAutoPlay();
+                } else if (this.isPlaying) {
+                    this.startAutoPlay();
+                }
+            });
+        }
 
-        deleteBtn.onclick = () => {
-            tasks.splice(index, 1); // xoá phần tử khỏi state
-            saveToStorage();
-            render();
-        };
+        /**
+         * XỬ LÝ SWIPE GESTURE
+         * Detect swipe direction và trigger slide tương ứng
+         */
+        handleSwipe() {
+            const swipeDistance = this.touchEndX - this.touchStartX;
+            
+            if (Math.abs(swipeDistance) > this.touchThreshold) {
+                if (swipeDistance > 0) {
+                    // Swipe right -> previous
+                    this.prevSlide();
+                } else {
+                    // Swipe left -> next
+                    this.nextSlide();
+                }
+            }
+        }
 
-        div.appendChild(text);
-        div.appendChild(editBtn);
-        div.appendChild(deleteBtn);
+        /**
+         * NEXT SLIDE - Với xử lý index an toàn
+         * Sử dụng modulo để wrap về đầu khi đến cuối
+         */
+        nextSlide() {
+            // LOGIC: (currentIndex + 1) % totalSlides
+            // Ví dụ: index = 5, total = 6 → (5 + 1) % 6 = 0 (quay về đầu)
+            const nextIndex = (this.currentIndex + 1) % this.totalSlides;
+            this.goToSlide(nextIndex);
+        }
 
-        list.appendChild(div);
+        /**
+         * PREVIOUS SLIDE - Với xử lý index âm
+         * Thêm totalSlides trước khi modulo để tránh số âm
+         */
+        prevSlide() {
+            // LOGIC: (currentIndex - 1 + totalSlides) % totalSlides
+            // Ví dụ: index = 0, total = 6 → (0 - 1 + 6) % 6 = 5 (quay về cuối)
+            // Thêm totalSlides đảm bảo không bao giờ có số âm trong modulo
+            const prevIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
+            this.goToSlide(prevIndex);
+        }
+
+        /**
+         * GO TO SPECIFIC SLIDE
+         * Với debounce logic để tránh spam click
+         */
+        goToSlide(index) {
+            // DEBOUNCE: Tránh spam click trong lúc transition
+            if (this.transitionInProgress) return;
+
+            // Validate index trong range (double-check)
+            if (index < 0 || index >= this.totalSlides) return;
+
+            this.transitionInProgress = true;
+            this.currentIndex = index;
+            this.updateCarousel();
+
+            // Reset transition flag sau khi animation xong (600ms)
+            setTimeout(() => {
+                this.transitionInProgress = false;
+            }, 600);
+
+            // Reset auto-play khi user tương tác
+            if (this.isPlaying) {
+                this.startAutoPlay();
+            }
+        }
+
+        /**
+         * UPDATE CAROUSEL
+         * PERFORMANCE: Sử dụng transform thay vì left/right
+         * Transform được GPU-accelerated, mượt mà hơn nhiều
+         */
+        updateCarousel() {
+            // Transform: translateX(-100% * index)
+            // Ví dụ: index = 2 → translateX(-200%)
+            const offset = -this.currentIndex * 100;
+            this.slidesContainer.style.transform = `translateX(${offset}%)`;
+
+            // Update active states
+            this.slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === this.currentIndex);
+            });
+
+            this.indicators.forEach((indicator, i) => {
+                indicator.classList.toggle('active', i === this.currentIndex);
+            });
+
+            // Update counter
+            this.counter.textContent = `${this.currentIndex + 1} / ${this.totalSlides}`;
+        }
+
+        /**
+         * AUTO-PLAY LOGIC
+         * Với progress bar animation
+         */
+        startAutoPlay() {
+            // Clear existing intervals
+            this.pauseAutoPlay();
+
+            // Start new interval
+            this.autoPlayInterval = setInterval(() => {
+                this.nextSlide();
+            }, this.autoPlayDelay);
+
+            // Start progress bar
+            this.startProgressBar();
+        }
+
+        pauseAutoPlay() {
+            if (this.autoPlayInterval) {
+                clearInterval(this.autoPlayInterval);
+                this.autoPlayInterval = null;
+            }
+            this.stopProgressBar();
+        }
+
+        /**
+         * PROGRESS BAR ANIMATION
+         * Smooth fill từ 0-100% trong 3 giây
+         */
+        startProgressBar() {
+            this.stopProgressBar();
+            
+            let progress = 0;
+            const increment = (this.progressUpdateInterval / this.autoPlayDelay) * 100;
+            
+            this.progressInterval = setInterval(() => {
+                progress += increment;
+                if (progress >= 100) {
+                    progress = 0;
+                }
+                this.progressBar.style.width = `${progress}%`;
+            }, this.progressUpdateInterval);
+        }
+
+        stopProgressBar() {
+            if (this.progressInterval) {
+                clearInterval(this.progressInterval);
+                this.progressInterval = null;
+            }
+            this.progressBar.style.width = '0%';
+        }
+
+        /**
+         * TOGGLE PLAY/PAUSE
+         */
+        togglePlayPause() {
+            this.isPlaying = !this.isPlaying;
+
+            if (this.isPlaying) {
+                this.startAutoPlay();
+                this.playPauseBtn.textContent = '⏸ Pause';
+                this.playPauseBtn.classList.remove('paused');
+            } else {
+                this.pauseAutoPlay();
+                this.playPauseBtn.textContent = '▶ Play';
+                this.playPauseBtn.classList.add('paused');
+            }
+        }
+    }
+
+    /**
+     * KHỞI TẠO CAROUSEL
+     * Đợi DOM load xong
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        const carousel = new Carousel();
+
+        // Log thông tin debug (có thể remove trong production)
+        console.log('🎨 Carousel initialized');
+        console.log(`📊 Total slides: ${carousel.totalSlides}`);
+        console.log('⚙️ Auto-play: 3 seconds');
+        console.log('✨ Features: Swipe, Keyboard, Auto-pause on hover');
     });
-}
 
-
-// ================== 5. SỰ KIỆN THÊM TASK ==================
-document.getElementById("addBtn").onclick = addTask;
-document.getElementById("taskInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") addTask();
-});
-
-function addTask() {
-    const input = document.getElementById("taskInput");
-    const text = input.value.trim();
-
-    if (text === "") return alert("Task không được để trống!");
-
-    tasks.push(text); // thêm vào state
-    saveToStorage();
-    render();
-
-    input.value = ""; // reset input
-}
-
-
-// ================== RENDER BAN ĐẦU ==================
-render();
+    /**
+     * GIẢI THÍCH TỔNG QUAN LOGIC:
+     * 
+     * 1. XỬ LÝ INDEX AN TOÀN:
+     *    - Modulo operator (%) để wrap index
+     *    - Không bao giờ out-of-bound
+     *    - Infinite loop tự nhiên
+     * 
+     * 2. TỐI ƯU PERFORMANCE:
+     *    - Transform thay vì left/right (GPU-accelerated)
+     *    - will-change CSS hint
+     *    - Debounce cho user interactions
+     *    - Passive event listeners
+     *    - RequestAnimationFrame có thể thêm nếu cần animation phức tạp
+     * 
+     * 3. UX IMPROVEMENTS:
+     *    - Auto-pause khi hover
+     *    - Progress bar visual feedback
+     *    - Keyboard navigation
+     *    - Touch/swipe support
+     *    - Pause khi tab hidden (tiết kiệm tài nguyên)
+     * 
+     * 4. RESPONSIVE:
+     *    - Media queries cho mobile/tablet
+     *    - Touch events cho mobile
+     *    - Flexible sizing
+     * 
+     * 5. ERROR HANDLING:
+     *    - Validation index trước khi goToSlide
+     *    - Transition flag để tránh spam
+     *    - Clear intervals khi pause
+     */
 </script>
+
 </body>
 </html>
